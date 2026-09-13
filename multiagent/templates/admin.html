@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site Control Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --taxi-yellow: #F2A900;
+    --ink: #111111;
+    --tile: #F4F1EA;
+    --ok-green: #1B6B3C;
+    --alert-red: #B3271A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--tile);
+    color: var(--ink);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .header {
+    background: var(--ink);
+    color: var(--tile);
+    padding: 20px 24px;
+    border-bottom: 5px solid var(--taxi-yellow);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  h1, h2 {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+  h1 { font-size: 24px; }
+  .header .sub { font-size: 11px; color: var(--taxi-yellow); letter-spacing: 2px; }
+  .wrap { padding: 20px; max-width: 900px; margin: 0 auto; }
+  .panel {
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    margin-bottom: 18px;
+  }
+  .panel-head {
+    background: var(--ink);
+    color: var(--tile);
+    padding: 8px 14px;
+    font-family: "Oswald", sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .panel-body { padding: 16px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.primary { background: var(--taxi-yellow); }
+  button.danger { background: var(--alert-red); color: #fff; }
+  button:hover { filter: brightness(0.95); }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .badge-ok { background: var(--ok-green); color: #fff; }
+  .badge-fixed { background: var(--taxi-yellow); }
+  .badge-outage { background: var(--ink); color: var(--taxi-yellow); }
+  .badge-truck { background: var(--alert-red); color: #fff; }
+  .badge-security { background: #4A3B8F; color: #fff; }
+  a.link-btn {
+    display: inline-block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    background: #fff;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .stat-row { display: flex; gap: 18px; flex-wrap: wrap; }
+  .stat {
+    border: 2px solid var(--ink);
+    padding: 10px 16px;
+    min-width: 140px;
+  }
+  .stat .num { font-family: "Oswald", sans-serif; font-size: 28px; }
+  .stat .lbl { font-size: 10px; color: #555; letter-spacing: 1px; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+  th { font-family: "Oswald", sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  .synced-yes { color: var(--ok-green); }
+  .synced-no { color: var(--alert-red); }
+  .kv { font-size: 12px; color: #444; }
+  .footer-note { font-size: 11px; color: #777; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="sub">Job Site No. 1</div>
+      <h1>Offline Agent &mdash; Control Panel</h1>
+    </div>
+    <div class="sub">ORF ENGINE ONLINE (LOCAL)</div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel">
+      <div class="panel-head">1. Throw a Scenario at It</div>
+      <div class="panel-body">
+        <div class="btn-row">
+          <form method="post" action="/admin/scenario/nominal"><button>Nominal</button></form>
+          <form method="post" action="/admin/scenario/carrier_outage"><button>Carrier Outage</button></form>
+          <form method="post" action="/admin/scenario/local_glitch"><button>Local Glitch</button></form>
+          <form method="post" action="/admin/scenario/hardware_fault"><button class="danger">Hardware Fault</button></form>
+          <form method="post" action="/admin/scenario/neighbor_relay_available"><button>Neighbor Relay Available</button></form>
+          <form method="post" action="/admin/scenario/security_anomaly"><button style="background:#4A3B8F; color:#fff;">Security Anomaly</button></form>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">2. Current Verdict (Deterministic, Cited)</div>
+      <div class="panel-body">
+        {% if result.rule_id == 'R6' %}<span class="badge badge-security">Security Anomaly &mdash; Isolated</span>
+        {% elif result.rule_id == 'R4' %}<span class="badge badge-ok">All Clear</span>
+        {% elif result.rule_id == 'R2' %}<span class="badge badge-fixed">Auto-Fixed</span>
+        {% elif result.rule_id in ['R1', 'R5'] %}<span class="badge badge-outage">Outage Upstream</span>
+        {% else %}<span class="badge badge-truck">Truck Roll</span>{% endif %}
+        <span class="badge" style="margin-left:6px; background:#eee;">{{ result.category }}</span>
+        <p style="margin: 12px 0 4px; font-size: 15px;">{{ result.verdict }}</p>
+        <p class="kv">{{ result.citation }}</p>
+        <p class="kv">Sensed state: {{ state }}</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">3. Local Queue (Keeps Growing With No Internet)</div>
+      <div class="panel-body">
+        <div class="stat-row">
+          <div class="stat"><div class="num">{{ depth }}</div><div class="lbl">Unsynced Events</div></div>
+        </div>
+        <div class="footer-note">Every tick above logs locally &mdash; no connection needed for this to work.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">4. Connectivity Returns &mdash; Flush the Queue</div>
+      <div class="panel-body">
+        <div class="btn-row">
+          <form method="post" action="/admin/sync"><button class="primary">Sync Now (Slack + Trello + Evidence Log)</button></form>
+          <form method="post" action="/admin/reset"><button>Reset Demo</button></form>
+          <a class="link-btn" href="/admin/evidence" target="_blank">View OSCAL Evidence Export &rarr;</a>
+        </div>
+        <p class="footer-note">If "Neighbor Relay Available" is active, this sync routes via the neighbor box instead of direct WAN. The evidence export includes every event &mdash; connectivity and security &mdash; whether synced yet or not.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Recent Events</div>
+      <div class="panel-body">
+        <table>
+          <tr><th>Rule</th><th>Verdict</th><th>Action</th><th>Synced</th></tr>
+          {% for e in events %}
+          <tr>
+            <td>{{ e.rule_id }}</td>
+            <td>{{ e.verdict }}</td>
+            <td>{{ e.action_taken }}</td>
+            <td class="{{ 'synced-yes' if e.synced else 'synced-no' }}">
+              {{ e.synced_via if e.synced else 'queued' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

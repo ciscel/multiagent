@@ -1,0 +1,68 @@
+[
+  {
+    "id": "R6",
+    "name": "Security anomaly detected",
+    "category": "security",
+    "citation": "R6: unauthorized_device=true (matches {attack_technique})",
+    "condition": {"unauthorized_device": true},
+    "verdict": "Unrecognized device / anomalous outbound traffic detected, matching {attack_technique}. Isolated automatically.",
+    "customer_message": "We caught and isolated a network security event automatically. Evidence has been logged for your records.",
+    "auto_fix": true,
+    "truck_roll": false
+  },
+  {
+    "id": "R3",
+    "name": "Premise hardware / power fault",
+    "category": "connectivity",
+    "citation": "R3: wan_link=down AND ap_functional=false AND neighbor_relay_available=false",
+    "condition": {"wan_link": "down", "ap_functional": false, "neighbor_relay_available": false},
+    "verdict": "No upstream signal and no local recovery path. Likely hardware or power fault at the premise.",
+    "customer_message": "This looks like it needs a technician. We've logged a service ticket \u2014 no need to call in.",
+    "auto_fix": false,
+    "truck_roll": true
+  },
+  {
+    "id": "R5",
+    "name": "Carrier outage, relayed via neighbor",
+    "category": "connectivity",
+    "citation": "R5: wan_link=down AND neighbor_relay_available=true",
+    "condition": {"wan_link": "down", "neighbor_relay_available": true},
+    "verdict": "Outage upstream of the premise. Status relayed to us through a nearby appliance \u2014 we already know.",
+    "customer_message": "We can already see this outage \u2014 a neighboring unit relayed your status to us. No action needed, no truck roll.",
+    "auto_fix": false,
+    "truck_roll": false
+  },
+  {
+    "id": "R1",
+    "name": "Carrier-side outage, isolated",
+    "category": "connectivity",
+    "citation": "R1: wan_link=down AND ap_functional=true AND neighbor_relay_available=false",
+    "condition": {"wan_link": "down", "ap_functional": true, "neighbor_relay_available": false},
+    "verdict": "Outage upstream of the premise. Box itself is healthy \u2014 nothing local to fix.",
+    "customer_message": "We can already see this outage from our side \u2014 no action needed on your end. Crews are aware. No truck roll required.",
+    "auto_fix": false,
+    "truck_roll": false
+  },
+  {
+    "id": "R2",
+    "name": "Local config drift, safe to auto-remediate",
+    "category": "connectivity",
+    "citation": "R2: wan_link=up AND (dns_ok=false OR dhcp_ok=false)",
+    "condition": {"wan_link": "up", "dns_or_dhcp_broken": true},
+    "verdict": "Local DNS/DHCP fault detected. Safe to auto-remediate.",
+    "customer_message": "We found a local network glitch and fixed it automatically. Give it about a minute.",
+    "auto_fix": true,
+    "truck_roll": false
+  },
+  {
+    "id": "R4",
+    "name": "Nominal",
+    "category": "connectivity",
+    "citation": "R4: wan_link=up AND dns_ok=true AND dhcp_ok=true",
+    "condition": {"wan_link": "up", "dns_or_dhcp_broken": false},
+    "verdict": "Everything nominal.",
+    "customer_message": "Your connection looks healthy.",
+    "auto_fix": false,
+    "truck_roll": false
+  }
+]

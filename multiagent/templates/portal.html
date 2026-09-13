@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Line Status</title>
+<style>
+  :root {
+    --taxi-yellow: #F2A900;
+    --ink: #111111;
+    --tile: #F4F1EA;
+    --ok-green: #1B6B3C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--tile);
+    color: var(--ink);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .header {
+    background: var(--ink);
+    color: var(--tile);
+    padding: 18px 20px;
+    border-bottom: 4px solid var(--taxi-yellow);
+  }
+  .header .tag {
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--taxi-yellow);
+  }
+  .header h1 {
+    margin: 4px 0 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .card {
+    margin: 18px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+  }
+  .card-top {
+    padding: 16px 18px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .status-pill {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .status-ok { background: var(--ok-green); color: #fff; }
+  .status-fixed { background: var(--taxi-yellow); color: var(--ink); }
+  .status-outage { background: var(--ink); color: var(--taxi-yellow); }
+  .status-truck { background: #B3271A; color: #fff; }
+  .status-security { background: #4A3B8F; color: #fff; }
+  .verdict {
+    padding: 18px;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .citation {
+    padding: 0 18px 16px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    color: #666;
+  }
+  .footer-note {
+    margin: 18px;
+    font-size: 12px;
+    color: #666;
+    font-family: "Courier New", monospace;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="tag">Local Line &mdash; No Internet Required</div>
+    <h1>Connection Status</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      {% if result.rule_id == 'R6' %}
+        <span class="status-pill status-security">Security Event Handled</span>
+      {% elif result.rule_id == 'R4' %}
+        <span class="status-pill status-ok">All Clear</span>
+      {% elif result.rule_id == 'R2' %}
+        <span class="status-pill status-fixed">Fixed On Site</span>
+      {% elif result.rule_id in ['R1', 'R5'] %}
+        <span class="status-pill status-outage">Outage Upstream</span>
+      {% else %}
+        <span class="status-pill status-truck">Tech Dispatched</span>
+      {% endif %}
+    </div>
+    <div class="verdict">{{ result.customer_message }}</div>
+    <div class="citation">Diagnosis ref: {{ result.rule_id }} &middot; checked from this box, no call needed</div>
+  </div>
+
+  <div class="footer-note">
+    This page is served directly from the equipment at your address.<br>
+    It works whether or not your internet is up.
+  </div>
+</body>
+</html>
