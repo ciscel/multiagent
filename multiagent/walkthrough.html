@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline Agent — Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --taxi:#F2A900;
+    --ink:#141210;
+    --tile:#F4F1EA;
+    --green:#1B6B3C;
+    --red:#B3271A;
+    --purple:#4A3B8F;
+    --line:#141210;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink);
+    color:var(--tile);
+    font-family:"IBM Plex Mono",monospace;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .stage{
+    width:100%;
+    max-width:1000px;
+    height:100vh;
+    max-height:720px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* progress rail — subway line */
+  .rail{
+    display:flex;
+    align-items:center;
+    gap:0;
+    padding:16px 24px 10px;
+  }
+  .stop{
+    flex:1;
+    height:4px;
+    background:#39332c;
+    position:relative;
+  }
+  .stop.done{background:var(--taxi);}
+  .stop.active{background:var(--taxi);}
+  .stop .dot{
+    position:absolute;right:-5px;top:-3px;
+    width:10px;height:10px;border-radius:50%;
+    background:#39332c;border:2px solid var(--ink);
+  }
+  .stop.done .dot,.stop.active .dot{background:var(--taxi);}
+
+  .frame{
+    flex:1;
+    margin:8px 24px 24px;
+    background:var(--tile);
+    color:var(--ink);
+    border:3px solid var(--line);
+    border-radius:2px;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* header bar of the "device" */
+  .devhead{
+    background:var(--ink);
+    color:var(--tile);
+    padding:12px 18px;
+    border-bottom:4px solid var(--taxi);
+    display:flex;justify-content:space-between;align-items:baseline;
+    flex-shrink:0;
+  }
+  .devhead .lbl{font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:2px;color:var(--taxi);text-transform:uppercase;}
+  .devhead .title{font-family:"Oswald",sans-serif;font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+  .devhead .rt{font-size:10px;letter-spacing:1px;color:#c9c2b4;}
+
+  .body{flex:1;padding:26px 30px;display:flex;flex-direction:column;justify-content:center;}
+
+  /* scene: title */
+  .kicker{font-family:"Oswald",sans-serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#6b6153;margin-bottom:14px;}
+  .headline{font-family:"Oswald",sans-serif;font-weight:700;font-size:46px;line-height:1.02;text-transform:uppercase;letter-spacing:.5px;}
+  .headline .y{background:var(--taxi);padding:0 8px;}
+  .sub{margin-top:18px;font-size:15px;line-height:1.6;max-width:60ch;color:#3a352d;}
+
+  /* three-up product line */
+  .triple{display:flex;gap:0;margin-top:26px;border:2px solid var(--ink);}
+  .triple .c{flex:1;padding:16px;border-right:2px solid var(--ink);}
+  .triple .c:last-child{border-right:none;}
+  .triple .n{font-family:"Oswald",sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:1px;}
+  .triple .d{font-size:11px;color:#6b6153;margin-top:6px;line-height:1.4;}
+
+  /* scene: verdict card */
+  .pill{
+    display:inline-block;font-family:"Oswald",sans-serif;font-weight:600;
+    font-size:13px;letter-spacing:1px;padding:6px 12px;border:2px solid var(--ink);
+    text-transform:uppercase;
+  }
+  .p-ok{background:var(--green);color:#fff;}
+  .p-fix{background:var(--taxi);color:var(--ink);}
+  .p-out{background:var(--ink);color:var(--taxi);}
+  .p-truck{background:var(--red);color:#fff;}
+  .p-sec{background:var(--purple);color:#fff;}
+  .cat{display:inline-block;margin-left:8px;font-size:11px;padding:5px 9px;border:2px solid var(--ink);background:#e6e0d4;text-transform:uppercase;letter-spacing:1px;}
+  .verdict{margin-top:20px;font-size:22px;line-height:1.35;font-weight:500;}
+  .cite{margin-top:16px;font-size:12px;color:#6b6153;border-left:3px solid var(--taxi);padding-left:12px;}
+  .state{margin-top:14px;font-size:11px;color:#8a8173;}
+
+  /* phone mock for customer view */
+  .split{display:flex;gap:24px;margin-top:20px;align-items:stretch;}
+  .col{flex:1;}
+  .col h4{font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b6153;margin-bottom:8px;}
+  .phone{
+    border:3px solid var(--ink);border-radius:14px;padding:14px;background:#fff;min-height:150px;
+    display:flex;flex-direction:column;
+  }
+  .phone .cust-msg{font-size:15px;line-height:1.4;margin-top:10px;}
+  .phone .foot{margin-top:auto;font-size:10px;color:#8a8173;padding-top:10px;}
+
+  /* evidence json */
+  .json{
+    background:var(--ink);color:#d8e6d0;font-size:11px;line-height:1.5;
+    padding:16px;border:2px solid var(--ink);margin-top:16px;
+    white-space:pre;overflow:hidden;border-radius:2px;max-height:240px;
+  }
+  .json .k{color:var(--taxi);}
+  .json .s{color:#9ecb8f;}
+
+  /* narration caption */
+  .caption{
+    position:absolute;left:24px;right:24px;bottom:24px;
+    background:var(--ink);color:var(--tile);
+    border-left:5px solid var(--taxi);
+    padding:14px 18px;font-size:15px;line-height:1.45;
+    z-index:5;
+  }
+  .caption b{color:var(--taxi);font-weight:600;}
+
+  /* error-screen intro */
+  .errscene{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;}
+  .err-bsod{background:#0a3d91;color:#fff;}
+  .err-dino{background:#f5f5f5;color:#5f6368;}
+  .err-whale{background:#55acee;color:#fff;}
+  .err-big{font-family:"Oswald",sans-serif;font-size:60px;font-weight:700;}
+  .err-txt{font-size:16px;margin-top:14px;max-width:40ch;line-height:1.5;}
+  .err-face{font-size:80px;line-height:1;margin-bottom:10px;}
+
+  .controls{position:absolute;top:14px;right:24px;z-index:20;display:flex;gap:8px;}
+  .controls button{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    background:var(--tile);color:var(--ink);border:2px solid var(--tile);
+    padding:6px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;border-radius:2px;
+  }
+  .hidden{display:none !important;}
+  .queue-badge{
+    display:inline-block;font-family:"Oswald",sans-serif;font-size:34px;
+    border:2px solid var(--ink);padding:6px 18px;margin-top:10px;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button id="pauseBtn">Pause</button>
+  <button id="restartBtn">Restart</button>
+</div>
+
+<div class="stage">
+  <div class="rail" id="rail"></div>
+  <div class="frame">
+    <div class="devhead">
+      <div>
+        <div class="lbl">Job Site No. 1 — Local Line</div>
+        <div class="title" id="devtitle">Offline Agent</div>
+      </div>
+      <div class="rt" id="rt">ORF ENGINE · LOCAL · NO INTERNET</div>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="caption" id="caption"></div>
+  </div>
+</div>
+
+<script>
+const scenes = [
+  // 0 — intro BSOD
+  {dur:4200, cls:"err-bsod", devtitle:"Before", rt:"ERROR CODE ERA",
+   html:`<div class="errscene err-bsod"><div class="err-big">:(</div><div class="err-txt">A memory error so common it became a meme — then memory protection shipped, and it disappeared.</div></div>`,
+   cap:`Windows retired this one. Not a prettier error — a <b>retired</b> one.`},
+  // 1 — dino
+  {dur:3600, cls:"err-dino", devtitle:"Before", rt:"ERROR CODE ERA",
+   html:`<div class="errscene err-dino"><div class="err-face">🦖</div><div class="err-txt">"No internet connection." Something broke — here's a dinosaur instead of a fix.</div></div>`,
+   cap:`You've seen this one this week.`},
+  // 2 — whale
+  {dur:3800, cls:"err-whale", devtitle:"Before", rt:"ERROR CODE ERA",
+   html:`<div class="errscene err-whale"><div class="err-face">🐋</div><div class="err-txt">Every platform gets its error screen. None of them tell you what to do.</div></div>`,
+   cap:`A dead end dressed up as information.`},
+  // 3 — thesis / title
+  {dur:5000, devtitle:"The Pitch", rt:"ORF ENGINE · LOCAL",
+   html:`<div class="kicker">One box. Not three.</div>
+     <div class="headline">Today we retire<br><span class="y">404</span></div>
+     <div class="triple">
+       <div class="c"><div class="n">Support Agent</div><div class="d">L1 tech support, on-site</div></div>
+       <div class="c"><div class="n">Security System</div><div class="d">Network anomaly detection</div></div>
+       <div class="c"><div class="n">Compliance Tool</div><div class="d">Audit-grade evidence</div></div>
+     </div>`,
+   cap:`Support agent, security system, compliance tool — <b>one engine, zero internet required.</b>`},
+  // 4 — reliability line
+  {dur:4600, devtitle:"Why It Matters", rt:"RELIABILITY",
+   html:`<div class="kicker">The difference</div>
+     <div class="headline" style="font-size:38px">Never fails<br>silently</div>
+     <div class="sub">Most agents look like they worked and quietly get it wrong. Every verdict here cites the exact rule that made it. No guessing. No black box. A decision you can audit.</div>`,
+   cap:`Every verdict cites the <b>exact rule</b> that made it.`},
+  // 5 — carrier outage
+  {dur:5200, devtitle:"Scenario: Outage", rt:"LIVE",
+   html:verdictScene("p-out","Outage Upstream","connectivity",
+     "Outage upstream of the premise. Box itself is healthy — nothing local to fix.",
+     "R1: wan_link=down AND ap_functional=true AND neighbor_relay_available=false",
+     "We can already see this outage. No action needed, no truck roll.",
+     "Outage Upstream"),
+   cap:`<b>38% of ISP calls start here.</b> No call, no hold music — it already knows.`},
+  // 6 — local glitch
+  {dur:4800, devtitle:"Scenario: Glitch", rt:"LIVE",
+   html:verdictScene("p-fix","Auto-Fixed","connectivity",
+     "Local DNS/DHCP fault detected. Safe to auto-remediate.",
+     "R2: wan_link=up AND (dns_ok=false OR dhcp_ok=false)",
+     "We found a local glitch and fixed it automatically. Give it a minute.",
+     "Fixed On Site"),
+   cap:`It doesn't just diagnose — <b>it fixes it.</b>`},
+  // 7 — hardware fault
+  {dur:5000, devtitle:"Scenario: Hardware", rt:"LIVE",
+   html:verdictScene("p-truck","Truck Roll","connectivity",
+     "No upstream signal and no local recovery path. Likely hardware or power fault at the premise.",
+     "R3: wan_link=down AND ap_functional=false AND neighbor_relay_available=false",
+     "This needs a technician. We've logged a service ticket — no need to call in.",
+     "Tech Dispatched"),
+   cap:`The one case that <b>actually</b> needs a truck. The box tells the difference.`},
+  // 8 — neighbor relay
+  {dur:5000, devtitle:"Scenario: Relay", rt:"LIVE · MESH",
+   html:verdictScene("p-out","Outage Upstream","connectivity",
+     "Outage upstream. Status relayed to us through a nearby appliance — we already know.",
+     "R5: wan_link=down AND neighbor_relay_available=true",
+     "A neighboring unit relayed your status to us. No action needed.",
+     "Outage Upstream"),
+   cap:`No internet, no cellular. Status hops <b>peer to peer</b> through a neighbor box.`},
+  // 9 — security
+  {dur:5400, devtitle:"Scenario: Security", rt:"LIVE · DEFENSE",
+   html:verdictScene("p-sec","Security — Isolated","security",
+     "Unrecognized device / anomalous outbound traffic, matching T1071.001 — Web Protocols (C2 beaconing). Isolated automatically.",
+     "R6: unauthorized_device=true (matches T1071.001)",
+     "We caught and isolated a network security event automatically. Evidence logged.",
+     "Security Event Handled"),
+   cap:`Same engine, different question — <b>an attack pattern, caught and isolated.</b>`},
+  // 10 — evidence export
+  {dur:6000, devtitle:"Evidence Export", rt:"OSCAL · MACHINE-READABLE",
+   html:`<div class="kicker">One trail, every category</div>
+     <div class="json"><span class="k">"assessment-results"</span>: {
+  <span class="k">"observations"</span>: [
+    { <span class="k">"title"</span>: <span class="s">"R1"</span>, <span class="k">"category"</span>: <span class="s">"connectivity"</span>,
+      <span class="k">"rule-citation"</span>: <span class="s">"R1: wan_link=down ..."</span> },
+    { <span class="k">"title"</span>: <span class="s">"R3"</span>, <span class="k">"category"</span>: <span class="s">"connectivity"</span>,
+      <span class="k">"truck-roll-required"</span>: <span class="s">"True"</span> },
+    { <span class="k">"title"</span>: <span class="s">"R6"</span>, <span class="k">"category"</span>: <span class="s">"security"</span>,
+      <span class="k">"rule-citation"</span>: <span class="s">"R6: matches T1071.001"</span> }
+  ]
+}</div>`,
+   cap:`Connectivity and security in <b>one cited evidence trail</b> — hand it straight to an insurer.`},
+  // 11 — offline queue proof
+  {dur:5000, devtitle:"Still Running", rt:"WAN DOWN · STILL LOGGING",
+   html:`<div class="kicker">Zero connectivity</div>
+     <div class="headline" style="font-size:34px">The loop never<br>stops</div>
+     <div class="sub">Sensing, deciding, acting, logging — all local. When a connection returns, the queue flushes to Slack, Trello, and the evidence log. Until then, nothing is lost.</div>
+     <div class="queue-badge" id="qb">7 events queued</div>`,
+   cap:`Internet's gone. <b>It keeps working anyway.</b>`},
+  // 12 — close
+  {dur:6000, devtitle:"Goodbye 404", rt:"ORF ENGINE · LOCAL",
+   html:`<div class="kicker">If it's truly agentic, it retires an error code</div>
+     <div class="headline">Today we say<br>goodbye to <span class="y">404</span></div>
+     <div class="sub" style="margin-top:24px">Support agent. Security system. Compliance tool.<br>One box. One loop. Never needs a connection.</div>`,
+   cap:`<b>Today, we say goodbye to 404.</b>`},
+];
+
+function verdictScene(pill, pillTxt, cat, verdict, cite, cust, custPill){
+  const pmap={"Outage Upstream":"p-out","Fixed On Site":"p-fix","Tech Dispatched":"p-truck","Security Event Handled":"p-sec"};
+  return `<div class="split">
+    <div class="col">
+      <h4>Admin — Verdict</h4>
+      <span class="pill ${pill}">${pillTxt}</span><span class="cat">${cat}</span>
+      <div class="verdict">${verdict}</div>
+      <div class="cite">${cite}</div>
+    </div>
+    <div class="col">
+      <h4>Customer Phone — Captive Portal</h4>
+      <div class="phone">
+        <span class="pill ${pmap[custPill]}" style="font-size:11px;padding:4px 9px">${custPill}</span>
+        <div class="cust-msg">${cust}</div>
+        <div class="foot">Served from the box at your address · works with no internet</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+const body=document.getElementById('body');
+const cap=document.getElementById('caption');
+const rail=document.getElementById('rail');
+const devtitle=document.getElementById('devtitle');
+const rt=document.getElementById('rt');
+const frame=document.querySelector('.frame');
+
+// build rail stops
+scenes.forEach((_,i)=>{
+  const s=document.createElement('div');s.className='stop';
+  s.innerHTML='<div class="dot"></div>';rail.appendChild(s);
+});
+const stops=[...rail.children];
+
+let idx=0,timer=null,paused=false;
+
+function render(i){
+  const sc=scenes[i];
+  body.innerHTML=sc.html;
+  cap.innerHTML=sc.cap;
+  devtitle.textContent=sc.devtitle||"Offline Agent";
+  rt.textContent=sc.rt||"";
+  // frame tint for error scenes
+  frame.style.background = sc.cls ? "transparent":"var(--tile)";
+  stops.forEach((s,j)=>{
+    s.className='stop'+(j<i?' done':j===i?' active':'');
+  });
+  // animate queue counter if present
+  const qb=document.getElementById('qb');
+  if(qb){let n=0;const iv=setInterval(()=>{n++;qb.textContent=n+" events queued";if(n>=7)clearInterval(iv);},260);}
+}
+
+function next(){
+  render(idx);
+  const d=scenes[idx].dur;
+  timer=setTimeout(()=>{
+    idx++;
+    if(idx>=scenes.length){idx=scenes.length-1;render(idx);return;}
+    next();
+  },d);
+}
+
+document.getElementById('pauseBtn').onclick=function(){
+  paused=!paused;
+  this.textContent=paused?"Play":"Pause";
+  if(paused){clearTimeout(timer);}else{next();}
+};
+document.getElementById('restartBtn').onclick=function(){
+  clearTimeout(timer);idx=0;paused=false;
+  document.getElementById('pauseBtn').textContent="Pause";next();
+};
+
+// click anywhere to advance manually
+frame.addEventListener('click',()=>{
+  clearTimeout(timer);
+  idx=Math.min(idx+1,scenes.length-1);
+  render(idx);
+  if(!paused){const d=scenes[idx].dur;timer=setTimeout(()=>{idx++;if(idx<scenes.length)next();},d);}
+});
+
+next();
+</script>
+</body>
+</html>
